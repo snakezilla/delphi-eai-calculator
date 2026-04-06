@@ -283,7 +283,7 @@ def calculate_eai(
         positive_lymph_nodes=int(positive_lymph_nodes) if not pd.isna(positive_lymph_nodes) else 0
     )
 
-    is_pathological = sample_type.lower().strip() == "pathological"
+    is_pathological = sample_type.lower().strip() == "pathologic"
 
     # Check for missing critical genes
     missing_genes = []
@@ -552,33 +552,33 @@ def results_to_dataframe(results: List[EAIResult]) -> pd.DataFrame:
             'Sample': r.sample_id,
             'Bead Count': bead_display,
             'Min Bead Count': r.min_bead_count,
-            'Mean Ref Genes': round(r.avg_reference_genes, 4) if not math.isnan(r.avg_reference_genes) else 'N/A',
-            'Background': round(r.background, 4) if not math.isnan(r.background) else 0.0,
+            'Mean Ref Genes': round(r.avg_reference_genes, 2) if not math.isnan(r.avg_reference_genes) else 'N/A',
+            'Background': round(r.background, 2) if not math.isnan(r.background) else 0.0,
             'PASSED (Y/N)': 'PASS' if r.qc_passed else 'FAIL',
             'Accession Match': 'Yes' if r.qc_accession_matched else 'No',
-            'SET ER/PR': round(r.calibrated_set_erpr, 4),
-            'ESR1': round(r.calibrated_esr1, 4),
-            'ERBB2': round(r.calibrated_erbb2, 4),
-            'PGR': round(r.calibrated_pgr, 4),
-            'AURKA': round(r.calibrated_aurka, 4),
+            'SET ER/PR': round(r.calibrated_set_erpr, 2),
+            'ESR1': round(r.calibrated_esr1, 2),
+            'ERBB2': round(r.calibrated_erbb2, 2),
+            'PGR': round(r.calibrated_pgr, 2),
+            'AURKA': round(r.calibrated_aurka, 2),
             'Sample Type': r.sample_type,
-            'cT': r.tumor_stage if not r.sample_type.lower() == 'pathological' else '',
-            'cN': r.tumor_node if not r.sample_type.lower() == 'pathological' else '',
-            'Tumor size (mm)': r.tumor_size_mm if r.sample_type.lower() == 'pathological' else '',
-            'pT': r.tumor_stage if r.sample_type.lower() == 'pathological' else '',
-            '# Nodes': r.positive_lymph_nodes if r.sample_type.lower() == 'pathological' else '',
-            'pN': r.tumor_node if r.sample_type.lower() == 'pathological' else '',
-            'SET2,3': round(r.set23, 4) if not math.isnan(r.set23) else 'N/A',
+            'cT': r.tumor_stage if not r.sample_type.lower() == 'pathologic' else '',
+            'cN': r.tumor_node if not r.sample_type.lower() == 'pathologic' else '',
+            'Tumor size (mm)': r.tumor_size_mm if r.sample_type.lower() == 'pathologic' else '',
+            'pT': r.tumor_stage if r.sample_type.lower() == 'pathologic' else '',
+            '# Nodes': r.positive_lymph_nodes if r.sample_type.lower() == 'pathologic' else '',
+            'pN': r.tumor_node if r.sample_type.lower() == 'pathologic' else '',
+            'SET2,3': round(r.set23, 2) if not math.isnan(r.set23) else 'N/A',
             'SET2,3 Category': r.set23_category,
             'ESR1 Risk': r.esr1_risk,
             'ERBB2 Risk': r.erbb2_risk,
             'PGR Risk': r.pgr_risk,
             'PGR Level': r.pgr_risk_level,
-            'AURKA Risk': round(r.aurka_risk, 4),
-            'RNA4': round(r.rna4_score, 4),
-            'Stage Risk': round(r.stage_risk, 4) if not math.isnan(r.stage_risk) else 'N/A',
-            'Node Risk': round(r.node_risk, 4) if not math.isnan(r.node_risk) else 'N/A',
-            'BPI': round(r.bpi, 4) if not math.isnan(r.bpi) else 'N/A',
+            'AURKA Risk': round(r.aurka_risk, 2),
+            'RNA4': round(r.rna4_score, 2),
+            'Stage Risk': round(r.stage_risk, 2) if not math.isnan(r.stage_risk) else 'N/A',
+            'Node Risk': round(r.node_risk, 2) if not math.isnan(r.node_risk) else 'N/A',
+            'BPI': round(r.bpi, 2) if not math.isnan(r.bpi) else 'N/A',
             'QC Fail Reason': r.qc_fail_reason if r.qc_fail_reason else '',
             'Algorithm Version': r.algo_version
         })

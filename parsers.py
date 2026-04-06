@@ -274,8 +274,8 @@ def parse_accession_xlsx(file_content: bytes) -> AccessionData:
 def _normalize_sample_type(val: str) -> str:
     """Normalize sample type to Clinical or Pathological."""
     val_lower = val.lower().strip()
-    if val_lower in ['pathological', 'pathologic', 'path', 'p']:
-        return 'Pathological'
+    if val_lower in ['pathological', 'pathologic', 'pathology', 'path', 'p']:
+        return 'Pathologic'
     elif val_lower in ['clinical', 'clin', 'c']:
         return 'Clinical'
     elif val_lower in ['control', 'ctrl']:
