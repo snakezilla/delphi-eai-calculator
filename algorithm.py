@@ -56,6 +56,7 @@ THRESHOLDS = {
 # QC thresholds
 QC_MIN_BEAD_COUNT = 30
 QC_MIN_MEAN_REFERENCE = 3.0
+QC_MIN_BACKGROUND = 3.5
 
 
 class PGRRiskLevel(Enum):
@@ -74,6 +75,7 @@ class EAIResult:
     qc_passed: bool = True
     qc_bead_count_passed: bool = True
     qc_mean_ref_passed: bool = True
+    qc_background_passed: bool = True
     qc_genes_present: bool = True
     qc_accession_matched: bool = True
     qc_fail_reason: str = ""
@@ -347,6 +349,16 @@ def calculate_eai(
         else:
             result.qc_fail_reason = f"Mean ref genes {ref_mean:.2f} < {QC_MIN_MEAN_REFERENCE}"
 
+    # 4c: Background check (mean of NC adjustment values for reference genes)
+    bg = result.background
+    if not math.isnan(bg) and bg < QC_MIN_BACKGROUND:
+        result.qc_background_passed = False
+        result.qc_passed = False
+        if result.qc_fail_reason:
+            result.qc_fail_reason += f"; Background {bg:.2f} < {QC_MIN_BACKGROUND}"
+        else:
+            result.qc_fail_reason = f"Background {bg:.2f} < {QC_MIN_BACKGROUND}"
+
     # Step 5: If QC fails for controls, we still calculate but flag it
     # For actual samples, we continue calculation even if QC fails but report it
 
@@ -436,7 +448,7 @@ def process_batch(
     counts_df: pd.DataFrame,
     accession_df: pd.DataFrame,
     nc_sample_ids: List[str]
-) -> List[EAIResult]:
+) -> Tuple[List[EAIResult], List[str]]:
     """
     Process a batch of samples through the EAI algorithm.
 
@@ -447,12 +459,13 @@ def process_batch(
         nc_sample_ids: List of negative control sample IDs
 
     Returns:
-        List of EAIResult objects, one per sample
+        Tuple of (List of EAIResult objects, List of skipped sample IDs)
     """
     # Calculate NC adjustment
     nc_adjustment = calculate_negative_control_adjustment(net_mfi_df, nc_sample_ids)
 
     results = []
+    skipped_samples = []
 
     for _, row in net_mfi_df.iterrows():
         sample_id = str(row['Sample']).strip()
@@ -483,28 +496,20 @@ def process_batch(
                     else:
                         bead_counts[gene] = 100
 
-        # Get accession info
+        # Get accession info — exact match required, skip if no match
         acc_match = accession_df[accession_df['sample_id'].str.strip() == sample_id]
-        accession_matched = len(acc_match) > 0
 
-        if accession_matched:
-            acc_row = acc_match.iloc[0]
-            sample_type = str(acc_row.get('sample_type', 'Clinical'))
-            tumor_stage = str(acc_row.get('tumor_stage', ''))
-            tumor_node = str(acc_row.get('tumor_node', ''))
-            tumor_size_mm = acc_row.get('tumor_size_mm', 0.0)
-            positive_lymph_nodes = acc_row.get('positive_lymph_nodes', 0)
+        if len(acc_match) == 0:
+            # Per Federico (Apr 8, 2026): skip samples not in accession file
+            skipped_samples.append(sample_id)
+            continue
 
-            # Warn about duplicate sample IDs (use first match)
-            if len(acc_match) > 1:
-                pass  # Could log warning here
-        else:
-            # Default values if no accession match - flag this in result
-            sample_type = 'Clinical'
-            tumor_stage = ''
-            tumor_node = ''
-            tumor_size_mm = 0.0
-            positive_lymph_nodes = 0
+        acc_row = acc_match.iloc[0]
+        sample_type = str(acc_row.get('sample_type', 'Clinical'))
+        tumor_stage = str(acc_row.get('tumor_stage', ''))
+        tumor_node = str(acc_row.get('tumor_node', ''))
+        tumor_size_mm = acc_row.get('tumor_size_mm', 0.0)
+        positive_lymph_nodes = acc_row.get('positive_lymph_nodes', 0)
 
         # Handle NaN values
         if pd.isna(tumor_size_mm):
@@ -525,17 +530,9 @@ def process_batch(
             positive_lymph_nodes=int(positive_lymph_nodes)
         )
 
-        # Flag samples without accession match
-        result.qc_accession_matched = accession_matched
-        if not accession_matched:
-            if result.qc_fail_reason:
-                result.qc_fail_reason += "; No accession record found"
-            else:
-                result.qc_fail_reason = "No accession record found (using defaults)"
-
         results.append(result)
 
-    return results
+    return results, skipped_samples
 
 
 def results_to_dataframe(results: List[EAIResult]) -> pd.DataFrame:

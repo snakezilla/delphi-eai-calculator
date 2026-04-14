@@ -158,20 +158,24 @@ def process_files(xponent_file, accession_file):
             return
 
         if len(unmatched_xponent) > 0:
-            st.warning(f"⚠️ {len(unmatched_xponent)} samples in XPonent not found in Accession: "
-                      f"{list(unmatched_xponent)[:5]}{'...' if len(unmatched_xponent) > 5 else ''}")
+            st.info(f"ℹ️ {len(unmatched_xponent)} sample(s) in XPonent not found in Accession (will be skipped): "
+                   f"{list(unmatched_xponent)[:5]}{'...' if len(unmatched_xponent) > 5 else ''}")
 
         progress_bar.progress(60)
 
         # Step 4: Run algorithm
         status_text.text("🧮 Calculating SET2,3 scores...")
 
-        results = process_batch(
+        results, skipped_samples = process_batch(
             net_mfi_df=xponent_data.net_mfi,
             counts_df=xponent_data.counts,
             accession_df=accession_data.samples,
             nc_sample_ids=xponent_data.negative_controls
         )
+
+        if skipped_samples:
+            st.info(f"ℹ️ Skipped {len(skipped_samples)} sample(s) with no accession match: "
+                   f"{skipped_samples[:5]}{'...' if len(skipped_samples) > 5 else ''}")
 
         progress_bar.progress(90)
 
