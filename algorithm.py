@@ -77,7 +77,6 @@ class EAIResult:
     qc_mean_ref_passed: bool = True
     qc_background_passed: bool = True
     qc_genes_present: bool = True
-    qc_accession_matched: bool = True
     qc_fail_reason: str = ""
     min_bead_count: int = 0
     missing_genes: str = ""
@@ -311,7 +310,7 @@ def calculate_eai(
         adjusted_mfi[gene] = max(0, raw - nc)
 
     # Calculate background (mean of NC adjustments used)
-    nc_values = [nc_adjustment.get(g, 0) for g in REFERENCE_GENES]
+    nc_values = [nc_adjustment.get(g, 0.0) for g in REFERENCE_GENES]
     result.background = calculate_mean(nc_values)
 
     # Step 1b-c: Log2 transform with floor at 0
@@ -349,9 +348,10 @@ def calculate_eai(
         else:
             result.qc_fail_reason = f"Mean ref genes {ref_mean:.2f} < {QC_MIN_MEAN_REFERENCE}"
 
-    # 4c: Background check (mean of NC adjustment values for reference genes)
+    # 4c: Background check — mean of NC MFI across reference genes
+    # (nc_adjustment holds mean NC value per gene from calculate_negative_control_adjustment)
     bg = result.background
-    if not math.isnan(bg) and bg < QC_MIN_BACKGROUND:
+    if math.isnan(bg) or bg < QC_MIN_BACKGROUND:
         result.qc_background_passed = False
         result.qc_passed = False
         if result.qc_fail_reason:
@@ -550,9 +550,8 @@ def results_to_dataframe(results: List[EAIResult]) -> pd.DataFrame:
             'Bead Count': bead_display,
             'Min Bead Count': r.min_bead_count,
             'Mean Ref Genes': round(r.avg_reference_genes, 2) if not math.isnan(r.avg_reference_genes) else 'N/A',
-            'Background': round(r.background, 2) if not math.isnan(r.background) else 0.0,
+            'Background': round(r.background, 2) if not math.isnan(r.background) else 'N/A',
             'PASSED (Y/N)': 'PASS' if r.qc_passed else 'FAIL',
-            'Accession Match': 'Yes' if r.qc_accession_matched else 'No',
             'SET ER/PR': round(r.calibrated_set_erpr, 2),
             'ESR1': round(r.calibrated_esr1, 2),
             'ERBB2': round(r.calibrated_erbb2, 2),

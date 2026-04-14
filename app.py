@@ -157,10 +157,6 @@ def process_files(xponent_file, accession_file):
             st.write("**Accession samples:**", list(accession_samples)[:10])
             return
 
-        if len(unmatched_xponent) > 0:
-            st.info(f"ℹ️ {len(unmatched_xponent)} sample(s) in XPonent not found in Accession (will be skipped): "
-                   f"{list(unmatched_xponent)[:5]}{'...' if len(unmatched_xponent) > 5 else ''}")
-
         progress_bar.progress(60)
 
         # Step 4: Run algorithm
@@ -176,6 +172,13 @@ def process_files(xponent_file, accession_file):
         if skipped_samples:
             st.info(f"ℹ️ Skipped {len(skipped_samples)} sample(s) with no accession match: "
                    f"{skipped_samples[:5]}{'...' if len(skipped_samples) > 5 else ''}")
+
+        if not results:
+            st.error("No results produced. All samples were either negative controls "
+                     "or had no accession match.")
+            if skipped_samples:
+                st.write("**Skipped samples:**", skipped_samples)
+            return
 
         progress_bar.progress(90)
 
@@ -235,7 +238,7 @@ def process_files(xponent_file, accession_file):
         if len(qc_failures) > 0:
             st.subheader("⚠️ QC Failures")
             st.dataframe(
-                qc_failures[['Sample', 'PASSED (Y/N)', 'Mean Ref Genes', 'Bead Count', 'QC Fail Reason']],
+                qc_failures[['Sample', 'PASSED (Y/N)', 'Mean Ref Genes', 'Background', 'Bead Count', 'QC Fail Reason']],
                 use_container_width=True,
                 hide_index=True
             )
