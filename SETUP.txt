@@ -1,0 +1,85 @@
+Delphi Analytical Calculator 4.0 (DAC 4.0)
+============================================
+SET2,3 Score Calculator for HR+/HER2- Breast Cancer
+Algorithm Version: 2.0.0
+
+REQUIREMENTS
+------------
+- Python 3.9 or higher (3.10+ recommended)
+- Internet access for first-time package installation only
+- Any modern web browser (Chrome, Edge, Firefox)
+
+QUICK START (Windows)
+---------------------
+1. Unzip this folder to a location on the lab PC
+2. Double-click "run.bat"
+3. Wait for setup to complete (first run takes ~1 minute to install packages)
+4. Browser will open automatically to http://localhost:8501
+5. Upload your XPonent CSV and Accession XLSX files
+6. Click "Calculate SET2,3 Scores"
+7. Download results as CSV or Excel
+
+Press Ctrl+C in the terminal window to stop the server.
+
+QUICK START (Mac/Linux)
+-----------------------
+1. Unzip this folder
+2. Open Terminal, navigate to this folder
+3. Run: bash run.sh
+4. Browser opens to http://localhost:8501
+
+MANUAL SETUP (if run scripts don't work)
+----------------------------------------
+1. Open a terminal/command prompt in this folder
+2. Create a virtual environment:
+     python -m venv venv
+3. Activate it:
+     Windows: venv\Scripts\activate
+     Mac/Linux: source venv/bin/activate
+4. Install dependencies:
+     pip install -r requirements.txt
+5. Run the app:
+     streamlit run app.py
+6. Open http://localhost:8501 in your browser
+
+INPUT FILES
+-----------
+XPonent CSV:
+  - Standard Luminex xPONENT export format
+  - Must contain "DataType:,Net MFI" section
+  - Negative controls auto-detected (labeled "nc", "NC", "negative control", etc.)
+
+Accession XLSX:
+  - Must have "Sample Id" column matching XPonent sample names (exact match required)
+  - Must have "Clinical or Pathology" column (values: Clinical, Pathologic, or Control)
+  - Must have "Tumor Stage" and "Tumor Node" columns
+  - For pathological samples: "Tumor Size" and "Number of Positive Lymph Nodes"
+
+QC CHECKS
+---------
+  - Bead count >= 30 per gene
+  - Mean reference genes >= 3.0 (background subtracted, log2 transformed)
+  - Background >= 3.5 (mean NC MFI across reference genes)
+  - Samples in XPonent without a matching accession record are skipped
+
+OUTPUT
+------
+Results include: SET2,3 score, SET2,3 category (High/Low), SET ER/PR,
+calibrated RNA4 gene values (ESR1, ERBB2, PGR, AURKA), risk scores,
+staging risk, BPI, and QC pass/fail with reasons.
+
+Export as CSV or Excel (includes Results and Summary sheets).
+
+FILES IN THIS PACKAGE
+---------------------
+  app.py           - Streamlit web application
+  algorithm.py     - Core EAI algorithm (v2.0.0)
+  parsers.py       - XPonent and Accession file parsers
+  requirements.txt - Python package dependencies
+  run.sh           - Mac/Linux startup script
+  run.bat          - Windows startup script
+  SETUP.txt        - This file
+
+SUPPORT
+-------
+Contact: Ahsan Eslami (aeslami@delphi-diagnostics.com)

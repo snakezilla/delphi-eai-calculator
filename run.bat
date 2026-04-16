@@ -5,13 +5,13 @@ REM This script starts the Streamlit web application
 cd /d "%~dp0"
 
 REM Check if virtual environment exists
-if not exist "..\venv" (
+if not exist "venv" (
     echo Creating virtual environment...
-    python -m venv ..\venv
+    python -m venv venv
 )
 
 REM Activate virtual environment
-call ..\venv\Scripts\activate.bat
+call venv\Scripts\activate.bat
 
 REM Install requirements
 pip install -q -r requirements.txt
