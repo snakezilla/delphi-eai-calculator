@@ -309,10 +309,6 @@ def calculate_eai(
         nc = nc_val if nc_val is not None and not (isinstance(nc_val, float) and math.isnan(nc_val)) else 0.0
         adjusted_mfi[gene] = max(0, raw - nc)
 
-    # Calculate background (mean of NC adjustments used)
-    nc_values = [nc_adjustment.get(g, 0.0) for g in REFERENCE_GENES]
-    result.background = calculate_mean(nc_values)
-
     # Step 1b-c: Log2 transform with floor at 0
     log2_values = {gene: log2_transform(val) for gene, val in adjusted_mfi.items()}
 
@@ -325,6 +321,12 @@ def calculate_eai(
 
     result.avg_reference_genes = ref_mean
     result.avg_target_genes = target_mean
+
+    # Background = mean of log2-transformed, NC-subtracted reference genes
+    # This is the same as ref_mean (avg_reference_genes)
+    # Per DACv3.2: AVERAGE of the 10 reference gene values in the
+    # "Background Subtracted Net MFI" section (log2 transformed)
+    result.background = ref_mean
 
     # Step 4: QC checks
     # 4a: Bead count check
